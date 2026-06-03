@@ -15,6 +15,11 @@ import 'flutter_skill_web_stub.dart'
     if (dart.library.js_interop) 'flutter_skill_web_interop.dart'
     as web_interop;
 
+/// easeOutBack 等曲线可能 overshoot，导致 alpha 超出 [0, 1] 触发断言。
+Color _colorWithOpacity(Color color, double opacity) {
+  return color.withOpacity(opacity.clamp(0.0, 1.0));
+}
+
 // ==================== ERROR CODES ====================
 
 class ErrorCode {
@@ -4163,7 +4168,7 @@ class _ParticleEffectPainter extends CustomPainter {
 
   void _drawWalkingDust(Canvas canvas, double cx, double cy) {
     final dustPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.3 * (1 - progress))
+      ..color = _colorWithOpacity(Colors.grey, 0.3 * (1 - progress))
       ..style = PaintingStyle.fill;
 
     // Dust clouds behind character
@@ -4195,19 +4200,24 @@ class _ParticleEffectPainter extends CustomPainter {
         const Color(0xFFFFEB3B),
         const Color(0xFFFF5722),
         i / 6,
-      )!
-          .withOpacity(0.8 * (1 - progress));
+      )!;
+      particlePaint.color = _colorWithOpacity(color, 0.8 * (1 - progress));
 
-      particlePaint.color = color;
-      canvas.drawCircle(Offset(x, y), 3 * (1 - progress), particlePaint);
+      canvas.drawCircle(
+        Offset(x, y),
+        max(0.0, 3 * (1 - progress)),
+        particlePaint,
+      );
     }
 
     // Impact effect for tapping
     if (action == CharacterAction.tapping && progress > 0.5) {
       final impactProgress = (progress - 0.5) * 2;
       final impactPaint = Paint()
-        ..color =
-            const Color(0xFFFF5722).withOpacity(0.5 * (1 - impactProgress))
+        ..color = _colorWithOpacity(
+          const Color(0xFFFF5722),
+          0.5 * (1 - impactProgress),
+        )
         ..style = PaintingStyle.stroke
         ..strokeWidth = 3;
 
